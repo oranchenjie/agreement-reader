@@ -11,7 +11,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "mock": "DSH_AGREEMENT_MOCK=1 node server.js",
-    "test": "node --test test/core.test.js test/api-client.test.js test/browser-shim.test.js test/browser-mode.test.js test/bookmarklet.test.js test/cmd-scripts.test.js test/retrieve.test.js test/legal.test.js test/html.test.js test/pdf.test.js test/websearch.test.js",
+    "test": "node --test test/core.test.js test/api-client.test.js test/browser-shim.test.js test/browser-mode.test.js test/bookmarklet.test.js test/cmd-scripts.test.js test/workflow.test.js test/retrieve.test.js test/legal.test.js test/html.test.js test/pdf.test.js test/websearch.test.js",
     "test:llm": "node test/integration-llm.mjs",
     "test:api": "node test/integration-sse.mjs && node test/integration-extract.mjs && node test/integration-pdf-api.mjs && node test/integration-ingest.mjs",
     "test:userkey": "node test/integration-userkey.mjs",

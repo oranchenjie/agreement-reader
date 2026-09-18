@@ -34,10 +34,17 @@ jobs:
 
       # 部署前先确认产物里没有 404 —— 静态站点最典型的事故
       # 就是某个模块没被构建进去，用户点到那个功能才发现
+      #
+      # 这里刻意不使用 actions/configure-pages。
+      # 它的唯一用处是吐出 base_path，而 base_path 就等于 /<仓库名>，
+      # 一行就能算出来；但它在「Pages 站点尚未建立」时会以
+      # "Get Pages site failed ... Not Found" 失败，把整个部署卡死。
+      # upload-pages-artifact 和 deploy-pages 都不依赖它。
+      # 站点本身是纯相对路径构建的，换仓库名或加自定义域名都不会失效。
       - name: 检查静态产物可达性
         run: npm run check:static
-
-      - uses: actions/configure-pages@v5
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

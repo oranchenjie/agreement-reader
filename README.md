@@ -302,6 +302,28 @@ https://<你的用户名>.github.io/agreement-reader/
 
 之后每次 `git push` 都会自动重新部署。
 
+### 部署踩坑记录
+
+**workflow 里刻意没有用 `actions/configure-pages`，请不要加回来。**
+它唯一的产出是 `base_path`，而 `base_path` 就等于 `/<仓库名>`，
+用 `github.event.repository.name` 一行就能算出来；但在「Pages 站点尚未建立」时
+它会直接以 `Get Pages site failed ... Not Found` 失败，把整个部署卡死
+（测试、构建、可达性检查全过之后才卡在这一步，非常难查）。
+`upload-pages-artifact` 和 `deploy-pages` 都不依赖它。
+`test/workflow.test.js` 会拦住它被重新引进来。
+
+**构建产物是路径无关的。** 前端一律用**相对路径**引用 `src/`，
+所以挂在站点根（本机服务端、自定义域名）或挂在子路径（项目站点 `/<仓库名>/`）
+都能解析。改前端引用时请保持相对 —— 任何 `/xxx` 形式的引用在子路径下都会 404。
+
+**如果 `git push` 一直卡住或超时**：多半是 `github.com:443` 被网络阻断了。
+这种情况通常 `api.github.com` 还是通的，于是表现为「能查仓库、就是推不上去」。
+改用 SSH 可以绕过（GitHub 的 `ssh.github.com:443` 和 `github.com:22` 一般不受影响）：
+
+```bash
+git push git@github.com:<你的用户名>/agreement-reader.git main
+```
+
 ### 本地先验证一遍
 
 ```bash

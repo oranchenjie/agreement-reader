@@ -1,0 +1,26 @@
+{
+  "name": "agreement-reader",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "协议阅读器 — 用 DeepSeek API 快速阅读用户协议/隐私政策并定位风险条款。零运行时依赖。",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "mock": "DSH_AGREEMENT_MOCK=1 node server.js",
+    "test": "node --test test/core.test.js test/api-client.test.js test/browser-mode.test.js test/bookmarklet.test.js test/cmd-scripts.test.js test/retrieve.test.js test/legal.test.js test/html.test.js test/pdf.test.js test/websearch.test.js",
+    "test:llm": "node test/integration-llm.mjs",
+    "test:api": "node test/integration-sse.mjs && node test/integration-extract.mjs && node test/integration-pdf-api.mjs && node test/integration-ingest.mjs",
+    "test:userkey": "node test/integration-userkey.mjs",
+    "test:render": "node test/integration-render.mjs",
+    "test:ingest": "node test/integration-ingest.mjs",
+    "test:resilience": "node test/integration-resilience.mjs",
+    "test:ask": "node test/integration-ask.mjs",
+    "build:static": "node scripts/build-static.mjs",
+    "preview:static": "node scripts/preview-static.mjs",
+    "check:static": "node scripts/check-static.mjs"
+  }
+}

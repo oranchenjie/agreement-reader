@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>协议阅读器 · 快速看懂用户协议里的坑</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">📄</span>
+        <div>
+          <h1>协议阅读器</h1>
+          <p class="brand-sub">把没人看的用户协议，变成一眼能懂的提醒</p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div id="status" class="status" title="运行状态">
+          <span class="dot"></span><span id="status-text">检查中…</span>
+        </div>
+        <button id="btn-legal" class="btn btn-ghost" type="button" data-legal="disclaimer" title="用户协议 · 免责声明 · 隐私说明">条款与免责</button>
+        <button id="btn-settings" class="btn btn-ghost" type="button">模型设置</button>
+        <button id="btn-history" class="btn btn-ghost" type="button">历史记录</button>
+        <button id="btn-new" class="btn btn-ghost" type="button">重新开始</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- ============ 输入 ============ -->
+      <section id="view-input" class="view">
+        <div id="version-banner" class="version-banner hidden"></div>
+        <div id="mode-note" class="mode-note hidden"></div>
+
+        <div id="consent-banner" class="consent-banner hidden">
+          <div class="consent-text">
+            <strong>使用前请知悉</strong>
+            <span>
+              本工具的分析与问答结果由 AI 生成，<strong>不是法律意见，也可能出错</strong>。
+              继续使用即表示你已阅读并同意
+              <button class="linklike" data-legal="terms" type="button">用户协议</button>、
+              <button class="linklike" data-legal="disclaimer" type="button">免责声明</button>
+              与
+              <button class="linklike" data-legal="privacy" type="button">隐私说明</button>。
+            </span>
+          </div>
+          <button id="btn-consent-ok" class="btn btn-secondary" type="button">我已阅读并同意</button>
+        </div>
+
+        <div class="hero">
+          <h2>把协议丢进来，剩下的交给我</h2>
+          <p>支持直接粘贴、网址抓取、PDF / Word / HTML / 文本文件上传。所有分析都会标注原文出处，你可以逐条核对。</p>
+        </div>
+
+        <div id="key-banner" class="key-banner hidden">
+          <div>
+            <strong>还没有配置 API Key</strong>
+            <span>当前只能用本地关键词规则，准确率明显较低（容易漏报、也容易误报）。</span>
+          </div>
+          <button id="btn-key-banner" class="btn btn-primary" type="button">填入 Key，使用真实模型</button>
+        </div>
+
+        <div class="card">
+          <div class="tabs" role="tablist">
+            <button class="tab is-active" data-tab="text" role="tab" type="button">粘贴文本</button>
+            <button class="tab" data-tab="url" role="tab" type="button">网址抓取</button>
+            <button class="tab" data-tab="file" role="tab" type="button">上传文件</button>
+          </div>
+
+          <div class="tab-panels">
+            <!-- 粘贴 -->
+            <div class="tab-panel is-active" data-panel="text">
+              <label class="field">
+                <span class="field-label">协议正文</span>
+                <textarea
+                  id="input-text"
+                  rows="12"
+                  placeholder="把用户协议、隐私政策、服务条款的正文粘贴到这里…&#10;&#10;也可以直接把网页上的协议整段复制过来，多余的空格和换行会自动清理。"
+                ></textarea>
+              </label>
+              <div class="row-between">
+                <span class="hint" id="text-count">0 字</span>
+                <span class="hint">提示：鼠标在下方任意位置松开，也能直接分析选中的文字</span>
+              </div>
+            </div>
+
+            <!-- 网址 -->
+            <div class="tab-panel" data-panel="url">
+              <div id="url-static-tip" class="url-static-tip hidden">
+                纯静态部署下无法抓取网页 —— 浏览器受同源策略限制，不能读取其它站点的内容。
+                请改用「粘贴文本」或「上传文件」。
+              </div>
+              <label class="field">
+                <span class="field-label">协议页面网址</span>
+                <div class="input-row">
+                  <input id="input-url" type="url" placeholder="example.com/terms　或　https://example.com/terms" autocomplete="off" />
+                  <button id="btn-fetch" class="btn btn-secondary" type="button">抓取正文</button>
+                </div>
+                <span class="hint">不写 https:// 也可以，会自动补全。</span>
+              </label>
+              <div id="url-result" class="url-result hidden"></div>
+
+              <details class="bookmarklet-box">
+                <summary>抓不到？用「抓取书签」从你自己的浏览器里取（推荐）</summary>
+                <p class="hint">
+                  需要登录、强反爬或复杂前端渲染的页面，服务端怎么抓都拿不到。
+                  而这个书签是在<strong>你自己的浏览器里</strong>执行，用的是你已登录的会话，
+                  所以以上问题全都不存在。
+                </p>
+                <div class="bm-row">
+                  <a id="bookmarklet-link" class="btn btn-secondary bm-link" href="#" title="把这个按钮拖到书签栏">📥 发送到协议阅读器</a>
+                  <span class="hint">← 把这个按钮<strong>拖到浏览器的书签栏</strong></span>
+                </div>
+                <p class="hint">
+                  书签会同时投递到：<span id="bookmarklet-targets" class="bm-targets">（正在获取）</span>
+                </p>
+                <p class="hint bm-warn">
+                  ⚠️ 书签里写死了地址。如果你换了访问方式（例如从 <code>127.0.0.1</code> 改成 WSL 的 IP），
+                  <strong>需要把上面这个按钮重新拖一次</strong>，旧书签会指向已经不通的地址。
+                </p>
+                <ol class="bm-steps">
+                  <li>在协议页面上点一下这个书签</li>
+                  <li>看到「已发送」提示后，回到本页面</li>
+                  <li>内容会自动出现，点「载入」即可</li>
+                </ol>
+                <div class="bm-row">
+                  <button id="btn-ingest-check" class="btn btn-ghost" type="button">手动检查新内容</button>
+                  <span id="ingest-status" class="hint"></span>
+                </div>
+              </details>
+              <div id="ingest-panel" class="url-result is-ok hidden"></div>
+            </div>
+
+            <!-- 文件 -->
+            <div class="tab-panel" data-panel="file">
+              <div id="dropzone" class="dropzone" tabindex="0" role="button">
+                <div class="dropzone-icon">⬆</div>
+                <p><strong>点击选择文件</strong>，或把文件拖到这里</p>
+                <p class="hint">支持 PDF、DOCX、HTML、TXT、MD、JSON，单个文件最大 30MB</p>
+                <input id="input-file" type="file" hidden multiple accept=".pdf,.docx,.html,.htm,.xhtml,.txt,.md,.markdown,.json,.mht,.mhtml" />
+              </div>
+              <ul id="file-list" class="file-list"></ul>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="meta-row">
+            <label class="field field-inline">
+              <span class="field-label">文档标题（可选）</span>
+              <input id="input-title" type="text" placeholder="例如：某某平台用户服务协议" />
+            </label>
+            <label class="field field-inline">
+              <span class="field-label">分析方式</span>
+              <select id="input-mode">
+                <option value="auto">自动（有 Key 用模型，否则用规则）</option>
+                <option value="llm">强制模型分析（更准，消耗 token）</option>
+                <option value="heuristic">仅本地规则（免费、离线，准确率较低）</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="extract-meta" class="extract-meta hidden"></div>
+
+          <div class="actions-row">
+            <button id="btn-analyze" class="btn btn-primary" type="button">开始分析</button>
+            <button id="btn-clear" class="btn btn-ghost" type="button">清空</button>
+          </div>
+        </div>
+
+        <div class="notes">
+          <div class="note">
+            <h3>它怎么工作</h3>
+            <p>先做结构与条款切分，再逐条交给模型标注风险，最后本地核验每条结论的原文出处。引用对不上原文的结论会被丢弃。</p>
+          </div>
+          <div class="note">
+            <h3>隐私边界</h3>
+            <p>历史记录只存在你自己的浏览器里，服务端不落库。使用模型分析时协议片段会发送到 DeepSeek API；选择「仅本地规则」则完全不外发。</p>
+          </div>
+          <div class="note">
+            <h3>免责与条款（也可从右上角「条款与免责」打开）</h3>
+            <p>
+              分析结果由 AI 生成，<strong>不构成法律意见</strong>。使用前请阅读
+              <button class="linklike" data-legal="terms" type="button">用户协议</button>、
+              <button class="linklike" data-legal="disclaimer" type="button">免责声明</button>、
+              <button class="linklike" data-legal="privacy" type="button">隐私说明</button>。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 进度 ============ -->
+      <section id="view-progress" class="view hidden">
+        <div class="card progress-card">
+          <h2 id="progress-title">正在分析…</h2>
+          <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+          <ul id="stage-list" class="stage-list"></ul>
+          <div class="actions-row">
+            <button id="btn-cancel" class="btn btn-ghost" type="button">取消</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 结果 ============ -->
+      <section id="view-result" class="view hidden">
+        <div class="result-head">
+          <div>
+            <h2 id="result-title">分析报告</h2>
+            <p class="hint" id="result-meta"></p>
+          </div>
+          <div class="actions-row">
+            <button id="btn-export-md" class="btn btn-secondary" type="button">导出 Markdown</button>
+            <button id="btn-print" class="btn btn-ghost" type="button">打印 / 存为 PDF</button>
+            <button id="btn-restart" class="btn btn-ghost" type="button">再分析一份</button>
+          </div>
+        </div>
+
+        <div id="result-warnings" class="warnings hidden"></div>
+
+        <div class="result-grid">
+          <!-- 左：体检结论 -->
+          <aside class="report-col">
+            <div class="card score-card">
+              <div class="score-ring-wrap">
+                <svg class="score-ring" viewBox="0 0 120 120" aria-hidden="true">
+                  <circle class="ring-bg" cx="60" cy="60" r="52" />
+                  <circle id="ring-fg" class="ring-fg" cx="60" cy="60" r="52" />
+                </svg>
+                <div class="score-center">
+                  <span id="score-value">--</span>
+                  <small>风险分</small>
+                </div>
+              </div>
+              <p id="score-verdict" class="score-verdict"></p>
+              <div id="severity-counts" class="severity-counts"></div>
+            </div>
+
+            <div class="card">
+              <h3 class="card-title">整体评估</h3>
+              <p id="report-summary" class="summary"></p>
+              <div id="report-readability" class="subnote"></div>
+            </div>
+
+            <div class="card" id="card-top">
+              <h3 class="card-title">最需要关注的几条</h3>
+              <ol id="top-concerns" class="top-concerns"></ol>
+            </div>
+
+            <div class="card" id="card-categories">
+              <h3 class="card-title">问题分布</h3>
+              <ul id="category-summary" class="category-summary"></ul>
+            </div>
+
+            <div class="card" id="card-actions">
+              <h3 class="card-title">建议你这样做</h3>
+              <ul id="report-actions" class="check-list"></ul>
+            </div>
+
+            <div class="card hidden" id="card-positives">
+              <h3 class="card-title">相对合理的地方</h3>
+              <ul id="report-positives" class="check-list"></ul>
+            </div>
+
+            <div class="card stats-card">
+              <h3 class="card-title">本次分析</h3>
+              <dl id="result-stats" class="stats"></dl>
+            </div>
+
+            <p class="disclaimer">
+              以上内容由 AI 生成，仅供风险提示，<strong>不构成法律意见</strong>。
+              重大决策前请咨询专业律师，并始终以协议原文为准。
+              <button class="linklike" data-legal="disclaimer" type="button">查看免责声明</button>
+            </p>
+          </aside>
+
+          <!-- 右：分栏内容 -->
+          <div class="doc-col">
+            <div class="tabs result-tabs" id="result-tabs" role="tablist">
+              <button class="tab is-active" data-rtab="findings" type="button">风险条款 <span id="findings-count" class="pill">0</span></button>
+              <button class="tab" data-rtab="digest" type="button">条款解读 <span id="digest-count" class="pill">0</span></button>
+              <button class="tab" data-rtab="interactions" type="button">条款联系 <span id="interactions-count" class="pill">0</span></button>
+              <button class="tab" data-rtab="ask" type="button">提问</button>
+            </div>
+
+            <!-- 风险条款 -->
+            <div class="card rtab-panel is-active" data-rpanel="findings">
+              <div class="findings-head">
+                <div class="findings-tools">
+                  <input id="findings-search" type="search" placeholder="搜索条款 / 类别…" />
+                  <div id="severity-filter" class="chip-row"></div>
+                </div>
+                <label class="toggle"><input id="filter-hidden" type="checkbox" /> 只看不明显的</label>
+              </div>
+              <ul id="findings-list" class="findings-list"></ul>
+            </div>
+
+            <!-- 条款解读 -->
+            <div class="card rtab-panel" data-rpanel="digest">
+              <p class="hint panel-hint">
+                把每一条实质性条款用大白话讲一遍 —— 不只看风险，先看懂这份协议到底约定了什么。
+              </p>
+              <ul id="digest-list" class="digest-list"></ul>
+            </div>
+
+            <!-- 条款联系 -->
+            <div class="card rtab-panel" data-rpanel="interactions">
+              <p class="hint panel-hint">
+                有些坑不是单条造成的，而是几条组合起来才成立。下面指出这类组合效应。
+              </p>
+              <div id="interactions-list" class="interactions-list"></div>
+            </div>
+
+            <!-- 提问 -->
+            <div class="card rtab-panel" data-rpanel="ask">
+              <div class="ask-head">
+                <h3 class="card-title">就这些协议提问</h3>
+                <p class="hint">
+                  回答<strong>严格依据协议原文</strong>，每条结论都附原文出处并经过核验。
+                  协议里没写的，它会直接告诉你没写 —— 而不是猜一个听起来合理的答案。
+                </p>
+              </div>
+
+              <div class="ask-corpus">
+                <button id="btn-ask-corpus" class="btn btn-ghost btn-mini" type="button">
+                  知识库：<span id="ask-corpus-summary">当前协议</span>
+                </button>
+                <div id="ask-corpus-panel" class="ask-corpus-panel hidden">
+                  <p class="hint">勾选要一起作为回答依据的协议（可多选，合并成同一个知识库）。</p>
+                  <ul id="ask-corpus-list" class="ask-corpus-list"></ul>
+                </div>
+              </div>
+
+              <div class="ask-input-row">
+                <textarea id="ask-question" rows="2" placeholder="例如：我的内容会被平台永久使用吗？／账号被封了余额能退吗？／数据会不会卖给第三方？"></textarea>
+                <button id="ask-submit" class="btn btn-primary" type="button">提问</button>
+              </div>
+
+              <div class="ask-options">
+                <label class="toggle">
+                  <input id="ask-web" type="checkbox" />
+                  <span>允许联网搜索补充（属于外部信息，回答中会单独标注）</span>
+                </label>
+                <div id="ask-suggest" class="chip-row"></div>
+              </div>
+
+              <div id="ask-status" class="hint"></div>
+              <div id="ask-answer" class="ask-answer"></div>
+              <ul id="ask-history" class="ask-history"></ul>
+            </div>
+
+            <!-- 原文对照：常驻显示，不藏在标签页里。
+                 结论和原文必须能同时看到 —— 否则核对每一条都要来回切标签。 -->
+            <div class="card doc-card" id="doc-card">
+              <div class="doc-head">
+                <h3 class="card-title">协议原文</h3>
+                <div class="doc-tools">
+                  <label class="toggle"><input id="toggle-highlight" type="checkbox" checked /> 高亮风险条款</label>
+                  <button id="btn-font-down" class="btn btn-mini" type="button">A−</button>
+                  <button id="btn-font-up" class="btn btn-mini" type="button">A+</button>
+                </div>
+              </div>
+              <div id="doc-content" class="doc-content"></div>
+              <div id="doc-truncated" class="hint hidden"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============ 模型设置 ============ -->
+    <dialog id="settings-dialog" class="dialog settings-dialog">
+      <div class="dialog-head">
+        <h2>模型设置</h2>
+        <button id="btn-settings-close" class="btn btn-ghost" type="button">关闭</button>
+      </div>
+
+      <div class="settings-body">
+        <p class="hint settings-notice">
+          API Key <strong>只保存在你自己的浏览器里</strong>，每次分析时随请求发给本地服务使用。
+          服务端不保存、不写日志、不回显。清除浏览器数据即彻底消失。
+        </p>
+
+        <label class="field">
+          <span class="field-label">DeepSeek API Key</span>
+          <div class="input-row">
+            <input id="set-key" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" />
+            <button id="btn-toggle-key" class="btn btn-ghost" type="button">显示</button>
+          </div>
+          <span class="hint">在 platform.deepseek.com 的 API Keys 页面创建。</span>
+        </label>
+
+        <label class="toggle settings-remember">
+          <input id="set-remember" type="checkbox" checked />
+          <span>记住密钥（下次打开无需重填；取消勾选则关闭标签页即失效）</span>
+        </label>
+
+        <details class="settings-advanced">
+          <summary>高级设置（接口地址与模型）</summary>
+          <label class="field">
+            <span class="field-label">API 地址</span>
+            <input id="set-base-url" type="text" placeholder="https://api.deepseek.com" spellcheck="false" />
+            <span class="hint">指向兼容 OpenAI 协议的自建或代理网关时修改。</span>
+          </label>
+          <label class="field">
+            <span class="field-label">逐条分析模型</span>
+            <input id="set-model" type="text" list="model-suggestions" placeholder="deepseek-v4-flash" spellcheck="false" />
+            <span class="hint">协议长、调用量大，建议用快的模型。</span>
+          </label>
+          <label class="field">
+            <span class="field-label">汇总模型</span>
+            <input id="set-model-summary" type="text" list="model-suggestions" placeholder="deepseek-v4-pro" spellcheck="false" />
+            <span class="hint">只调用一次，建议用更强的模型。</span>
+          </label>
+        </details>
+
+        <div id="settings-status" class="settings-status hidden"></div>
+      </div>
+
+      <div class="dialog-foot dialog-foot-split">
+        <button id="btn-settings-clear" class="btn btn-ghost btn-danger" type="button">清除密钥</button>
+        <div class="spacer"></div>
+        <button id="btn-test-key" class="btn btn-secondary" type="button">测试连接</button>
+        <button id="btn-settings-save" class="btn btn-primary" type="button">保存并使用</button>
+      </div>
+      <datalist id="model-suggestions"></datalist>
+    </dialog>
+
+    <!-- ============ 历史记录 ============ -->
+    <dialog id="history-dialog" class="dialog">
+      <div class="dialog-head">
+        <h2>历史记录</h2>
+        <button id="btn-history-close" class="btn btn-ghost" type="button">关闭</button>
+      </div>
+      <p class="hint">记录只保存在这台设备的浏览器中，不会上传。最多保留 20 份。</p>
+      <div id="history-compare" class="compare hidden"></div>
+      <ul id="history-list" class="history-list"></ul>
+      <div class="dialog-foot">
+        <button id="btn-history-clear" class="btn btn-ghost btn-danger" type="button">清空全部</button>
+      </div>
+    </dialog>
+
+    <!-- ============ 法律文档 ============ -->
+    <dialog id="legal-dialog" class="dialog legal-dialog">
+      <div class="dialog-head">
+        <h2 id="legal-title">文档</h2>
+        <button id="btn-legal-close" class="btn btn-ghost" type="button">关闭</button>
+      </div>
+      <div id="legal-body" class="legal-body"></div>
+      <div class="dialog-foot dialog-foot-split">
+        <button class="btn btn-ghost btn-mini" data-legal="terms" type="button">用户协议</button>
+        <button class="btn btn-ghost btn-mini" data-legal="disclaimer" type="button">免责声明</button>
+        <button class="btn btn-ghost btn-mini" data-legal="privacy" type="button">隐私说明</button>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>

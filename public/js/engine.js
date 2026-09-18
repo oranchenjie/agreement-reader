@@ -55,11 +55,14 @@ async function loadCore() {
     caps.docx = caps.shim
 
     // 2) 共享逻辑（与 Node 侧同一份源码）
+    // 用**相对路径**而不是 `/src/...`：
+    // GitHub Pages 的项目站点挂在子路径下（https://user.github.io/repo/），
+    // 站点根绝对路径会被解析到域名根目录，导致全部 404。
     const [pipeline, ask, extract, client] = await Promise.all([
-      import('/src/analyze/pipeline.js'),
-      import('/src/analyze/ask.js'),
-      import('/src/extract/index.js'),
-      import('/src/analyze/client.js'),
+      import('../src/analyze/pipeline.js'),
+      import('../src/analyze/ask.js'),
+      import('../src/extract/index.js'),
+      import('../src/analyze/client.js'),
     ])
 
     return { pipeline, ask, extract, client, shim }

@@ -1132,7 +1132,7 @@ async function init() {
       state.taxonomy = cfg.taxonomy
     } else {
       // 纯静态模式：没有服务端下发分类体系，直接从本地模块取同一份定义
-      const tax = await import('/src/analyze/taxonomy.js')
+      const tax = await import('../src/analyze/taxonomy.js')
       state.taxonomy = {
         categories: tax.CATEGORIES.map((c) => ({ id: c.id, label: c.label, group: c.group, what: c.what, why: c.why })),
         severityLabels: tax.SEVERITY_LABEL,

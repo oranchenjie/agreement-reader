@@ -11,10 +11,11 @@
  */
 const isNode = typeof process !== 'undefined' && Boolean(process.versions?.node)
 
-// 浏览器端用站点根绝对路径引用垫片：
-// 本机服务端把 public/ 当站点根、静态构建把 _site/ 当站点根，
-// 两种布局下 `/js/browser-shim.js` 都能正确解析；写相对路径则会随目录深度而失效。
-const impl = isNode ? await import('node:zlib') : await import('/js/browser-shim.js')
+// 浏览器端用相对路径引用垫片。构建后的布局是：
+//   _site/js/browser-shim.js   ← 垫片
+//   _site/src/extract/zlib-compat.js  ← 本文件，所以 ../../js/ 正好指回 js/
+// 不能用 `/js/...`：GitHub Pages 项目站点挂在子路径下，站点根绝对路径会 404。
+const impl = isNode ? await import('node:zlib') : await import('../../js/browser-shim.js')
 
 /** 兼容两种导出形态：node:zlib 是具名导出，垫片额外提供 zlib 命名空间 */
 const src = impl.zlib ?? impl
